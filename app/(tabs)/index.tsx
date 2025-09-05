@@ -13,72 +13,81 @@ type MatchType = {
     name: string;
     logo?: string;
     country_name?: string;
-    country_flag?: string; // علم الدولة للفريق المستضيف
+    country_flag?: string;
   };
   away: {
     name: string;
     logo?: string;
     country_name?: string;
-    country_flag?: string; // علم الدولة للفريق الضيف
+    country_flag?: string;
   };
 };
 
 export default function index() {
   const [matches, setMatches] = useState<MatchType[]>([]);
+  const [selectedDay, setSelectedDay] = useState<"today" | "yesterday">("today");
+
   // ——— حالات العرض
   const [menuVisible, setMenuVisible] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
-  
+
   // ——— مراجع ScrollView والأقسام
   const scrollViewRef = useRef<ParallaxScrollViewRef>(null);
   const leaguesRef = useRef<View>(null);
   const newsRef = useRef<View>(null);
-  
-  // متغيرات لتتبع مواضع الأقسام
+
   const [leaguesPosition, setLeaguesPosition] = useState(0);
   const [newsPosition, setNewsPosition] = useState(0);
 
+  // دالة لتنسيق التاريخ
+  const formatDate = (date: Date) => date.toISOString().split("T")[0];
+
+  // جلب البيانات حسب اليوم المختار
+  const fetchMatches = (day: "today" | "yesterday") => {
+    const today = new Date();
+    let targetDate = today;
+
+    if (day === "yesterday") {
+      targetDate = new Date(today);
+      targetDate.setDate(today.getDate() - 1);
+    }
+
+    const dateStr = formatDate(targetDate);
+    const url = `https://razan771.github.io/Koora-App/assets/data/matches-${dateStr}.json`;
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("فشل تحميل البيانات");
+        return res.json();
+      })
+      .then((data) => setMatches(data))
+      .catch((err) => {
+        console.error(`❌ خطأ في جلب بيانات ${day}:`, err.message);
+        setMatches([]);
+      });
+  };
+
   useEffect(() => {
-  const today = new Date().toISOString().split("T")[0]; 
-  const url = `https://razan771.github.io/Koora-App/assets/data/matches-${today}.json`;
+    fetchMatches(selectedDay);
+  }, [selectedDay]);
 
-  fetch(url)
-    .then((res) => {
-      if (!res.ok) throw new Error("فشل تحميل البيانات");
-      return res.json();
-    })
-    .then((data) => setMatches(data))
-    .catch((err) => {
-      console.error("❌ خطأ في جلب بيانات اليوم:", err.message);
-      setMatches([]); // fallback في حالة الخطأ
-    });
-}, []);
-
-
-  // ——— دوال فتح/إغلاق القائمة
+  // ——— دوال القائمة
   const onMenuPress = () => setMenuVisible(true);
   const onCloseMenu = () => {
     setMenuVisible(false);
     setShowSubMenu(false);
   };
 
-  // دالة لإظهار/إخفاء القائمة الفرعية
-  const toggleSubMenu = () => {
-    setShowSubMenu(!showSubMenu);
-  };
+  const toggleSubMenu = () => setShowSubMenu(!showSubMenu);
 
-  // دالة للتعامل مع النقر على الخيار الأول
   const handleFirstOption = () => {
     if (showSubMenu) {
-      // إذا كانت القائمة الفرعية مفتوحة، قم بالتمرير إلى القسم
       onSelectSection('leagues');
     } else {
-      // إذا لم تكن مفتوحة، أظهر القائمة الفرعية
       toggleSubMenu();
     }
   };
 
-  // دالة لحفظ موضع الأقسام
   const handleLeaguesLayout = (event: any) => {
     const { y } = event.nativeEvent.layout;
     setLeaguesPosition(y);
@@ -89,15 +98,14 @@ export default function index() {
     setNewsPosition(y);
   };
 
-  // دالة للتمرير إلى القسم المحدد
   const scrollToSection = (section: 'leagues' | 'news') => {
     if (!scrollViewRef.current) return;
     
     let targetY = 0;
     if (section === 'leagues') {
-      targetY = leaguesPosition - 50; // إزاحة 50 بكسل من الأعلى
+      targetY = leaguesPosition - 50;
     } else if (section === 'news') {
-      targetY = newsPosition - 50; // إزاحة 50 بكسل من الأعلى
+      targetY = newsPosition - 50;
     }
     
     scrollViewRef.current.scrollToPosition(Math.max(0, targetY));
@@ -107,10 +115,9 @@ export default function index() {
     onCloseMenu();
     setTimeout(() => {
       scrollToSection(sec);
-    }, 300); // تأخير للسماح بإغلاق الـ Modal
+    }, 300);
   };
 
-  // دالة للتعامل مع اختيار دوري معين
   const onSelectLeague = (leagueName: string) => {
     console.log('تم اختيار الدوري:', leagueName);
     onSelectSection('leagues');
@@ -125,58 +132,81 @@ export default function index() {
         }
         onMenuPress={onMenuPress}
       >
+        {/* 🔹 أزرار اختيار اليوم / الأمس */}
+        <View style={styles.toggleButtons}>
+          <TouchableOpacity
+            style={[styles.toggleBtn, selectedDay === "today" && styles.activeBtn]}
+            onPress={() => setSelectedDay("today")}
+          >
+            <ThemedText style={styles.toggleText}>مباريات اليوم</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.toggleBtn, selectedDay === "yesterday" && styles.activeBtn]}
+            onPress={() => setSelectedDay("yesterday")}
+          >
+            <ThemedText style={styles.toggleText}>مباريات الأمس</ThemedText>
+          </TouchableOpacity>
+        </View>
+
         <ThemedView 
           ref={leaguesRef}
           style={styles.titleContainer}
           onLayout={handleLeaguesLayout}
         >
           <ThemedText type="title">
-            مـبـاريـات الـيـوم
+            {selectedDay === "today" ? "مـبـاريـات الـيـوم" : "مـبـاريـات الأمـس"}
           </ThemedText>
         </ThemedView>
 
-        {matches.map((match) => (
-          <ThemedView key={match.id} style={styles.matchCard}>
-            <ThemedView style={styles.matchRow}>
-              {/* الفريق المستضيف (يمين) */}
-              <ThemedView style={styles.teamContainer}>
-                {match.home.logo && (
-                  <Image source={{ uri: match.home.logo }} style={styles.logo} contentFit="contain" />
-                )}
-                <ThemedText style={styles.teamName}>{match.home.name}</ThemedText>
-                {match.home.country_flag ? (
-                  <Image source={{ uri: match.home.country_flag }} style={styles.flag} contentFit="contain" />
-                ) : match.home.country_name ? (
-                  <ThemedText style={styles.countryText}>{match.home.country_name}</ThemedText>
-                ) : null} 
-              </ThemedView>
+        {matches.length > 0 ? (
+          matches.map((match) => (
+            <ThemedView key={match.id} style={styles.matchCard}>
+              <ThemedView style={styles.matchRow}>
+                {/* الفريق المستضيف */}
+                <ThemedView style={styles.teamContainer}>
+                  {match.home.logo && (
+                    <Image source={{ uri: match.home.logo }} style={styles.logo} contentFit="contain" />
+                  )}
+                  <ThemedText style={styles.teamName}>{match.home.name}</ThemedText>
+                  {match.home.country_flag ? (
+                    <Image source={{ uri: match.home.country_flag }} style={styles.flag} contentFit="contain" />
+                  ) : match.home.country_name ? (
+                    <ThemedText style={styles.countryText}>{match.home.country_name}</ThemedText>
+                  ) : null} 
+                </ThemedView>
 
-              {/* معلومات المباراة (وسط) */}
-              <ThemedView style={styles.middleInfo}>
-                <ThemedText type="defaultSemiBold" style={styles.league}>{match.league}</ThemedText>
-                <ThemedText style={styles.time}>
-                  {new Date(match.time).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </ThemedText>
-              </ThemedView>
+                {/* معلومات المباراة */}
+                <ThemedView style={styles.middleInfo}>
+                  <ThemedText type="defaultSemiBold" style={styles.league}>{match.league}</ThemedText>
+                  <ThemedText style={styles.time}>
+                    {new Date(match.time).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </ThemedText>
+                </ThemedView>
 
-              {/* الفريق الضيف (يسار) */}
-              <ThemedView style={styles.teamContainer}>
-                {match.away.logo && (
-                  <Image source={{ uri: match.away.logo }} style={styles.logo} contentFit="contain" />
-                )}
-                <ThemedText style={styles.teamName}>{match.away.name}</ThemedText>
-                {match.away.country_flag ? (
-                  <Image source={{ uri: match.away.country_flag }} style={styles.flag} contentFit="contain" />
-                ) : match.away.country_name ? (
-                  <ThemedText style={styles.countryText}>{match.away.country_name}</ThemedText>
-                ) : null}  
+                {/* الفريق الضيف */}
+                <ThemedView style={styles.teamContainer}>
+                  {match.away.logo && (
+                    <Image source={{ uri: match.away.logo }} style={styles.logo} contentFit="contain" />
+                  )}
+                  <ThemedText style={styles.teamName}>{match.away.name}</ThemedText>
+                  {match.away.country_flag ? (
+                    <Image source={{ uri: match.away.country_flag }} style={styles.flag} contentFit="contain" />
+                  ) : match.away.country_name ? (
+                    <ThemedText style={styles.countryText}>{match.away.country_name}</ThemedText>
+                  ) : null}  
+                </ThemedView>
               </ThemedView>
             </ThemedView>
-          </ThemedView>
-        ))}
+          ))
+        ) : (
+          <ThemedText style={{ textAlign: "center", marginTop: 20 }}>
+            لا توجد بيانات متاحة
+          </ThemedText>
+        )}
         
         <ThemedView 
           ref={newsRef}
@@ -241,6 +271,27 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  toggleButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 16,
+    gap: 12,
+  },
+  toggleBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#0bb33a",
+    backgroundColor: "#fff",
+  },
+  activeBtn: {
+    backgroundColor: "#0bb33a",
+  },
+  toggleText: {
+    fontSize: 16,
+    color: "#000",
   },
   matchCard: {
     width: '100%',
