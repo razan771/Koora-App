@@ -1,7 +1,9 @@
 name: Update Matches Data
 
 on:
-  workflow_dispatch:  # لتشغيله يدوياً
+  workflow_dispatch:   # لتشغيل يدوي
+  schedule:
+    - cron: '0 3 * * *'  # تشغيل تلقائي الساعة 3 صباحًا
 
 jobs:
   build:
