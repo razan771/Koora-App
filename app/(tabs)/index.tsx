@@ -5,9 +5,6 @@ import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-// ✅ استيراد البيانات من الملف المحلي
-import matchesData from '@/assets/data/matches.json';
-
 type MatchType = {
   id: number;
   league: string;
@@ -42,8 +39,21 @@ export default function index() {
   const [newsPosition, setNewsPosition] = useState(0);
 
   useEffect(() => {
-    setMatches(matchesData);
-  }, []);
+  const today = new Date().toISOString().split("T")[0]; 
+  const url = `https://razan771.github.io/Koora-App/assets/data/matches-${today}.json`;
+
+  fetch(url)
+    .then((res) => {
+      if (!res.ok) throw new Error("فشل تحميل البيانات");
+      return res.json();
+    })
+    .then((data) => setMatches(data))
+    .catch((err) => {
+      console.error("❌ خطأ في جلب بيانات اليوم:", err.message);
+      setMatches([]); // fallback في حالة الخطأ
+    });
+}, []);
+
 
   // ——— دوال فتح/إغلاق القائمة
   const onMenuPress = () => setMenuVisible(true);
