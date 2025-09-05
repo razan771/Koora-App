@@ -1,28 +1,27 @@
 name: Update Matches Data
 
 on:
-  schedule:
-    - cron: "0 3 * * *" # كل يوم الساعة 3 صباحاً UTC
-  workflow_dispatch: # يدوي لو حبيتي تشغليه من صفحة Actions
+  workflow_dispatch:  # لتشغيله يدوياً
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: fetch-matches (today + yesterday)
+      - name: Fetch matches
         run: npm run fetch
 
       - name: Deploy data to GitHub Pages
         run: npm run deploy-data
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
