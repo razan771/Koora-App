@@ -8,7 +8,10 @@ const LEAGUE_IDS = [501, 8, 82];
 
 async function fetchMatchesForDate(dateStr) {
   const leaguesParam = LEAGUE_IDS.join(',');
-  const url = `https://api.sportmonks.com/v3/football/fixtures?api_token=${API_TOKEN}&leagues=${leaguesParam}&starting_at=${dateStr}&locale=ar&include=participants;participants.country;league;venue;scores`;
+  const from = moment(dateStr).startOf('day').toISOString();
+  const to = moment(dateStr).endOf('day').toISOString();
+  const url = `https://api.sportmonks.com/v3/football/fixtures?api_token=${API_TOKEN}&leagues=${leaguesParam}&from=${from}&to=${to}&locale=ar&include=participants;participants.country;league;venue;scores`;
+
 
   try {
     const res = await axios.get(url);

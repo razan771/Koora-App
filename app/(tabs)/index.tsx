@@ -23,7 +23,15 @@ type MatchType = {
   };
 };
 
-export default function index() {
+// 🔹 تنسيق التاريخ المحلي
+function formatDateLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export default function Index() {
   const [matches, setMatches] = useState<MatchType[]>([]);
   const [selectedDay, setSelectedDay] = useState<"today" | "yesterday">("today");
 
@@ -39,10 +47,7 @@ export default function index() {
   const [leaguesPosition, setLeaguesPosition] = useState(0);
   const [newsPosition, setNewsPosition] = useState(0);
 
-  // دالة لتنسيق التاريخ
-  const formatDate = (date: Date) => date.toISOString().split("T")[0];
-
-  // جلب البيانات حسب اليوم المختار
+  // 🔹 جلب البيانات حسب اليوم المختار
   const fetchMatches = (day: "today" | "yesterday") => {
     const today = new Date();
     let targetDate = today;
@@ -52,17 +57,17 @@ export default function index() {
       targetDate.setDate(today.getDate() - 1);
     }
 
-    const dateStr = formatDate(targetDate);
-    const url = `https://razan771.github.io/Koora-App/matches-${today}.json`;
+    const dateStr = formatDateLocal(targetDate);
+    const url = `https://razan771.github.io/Koora-App/matches-${dateStr}.json`;
 
     fetch(url)
       .then((res) => {
-        if (!res.ok) throw new Error("فشل تحميل البيانات");
+        if (!res.ok) throw new Error(`❌ فشل تحميل البيانات من ${url}`);
         return res.json();
       })
       .then((data) => setMatches(data))
       .catch((err) => {
-        console.error(`❌ خطأ في جلب بيانات ${day}:`, err.message);
+        console.error(`خطأ في جلب بيانات ${day}:`, err.message || err);
         setMatches([]);
       });
   };
@@ -100,14 +105,14 @@ export default function index() {
 
   const scrollToSection = (section: 'leagues' | 'news') => {
     if (!scrollViewRef.current) return;
-    
+
     let targetY = 0;
     if (section === 'leagues') {
       targetY = leaguesPosition - 50;
     } else if (section === 'news') {
       targetY = newsPosition - 50;
     }
-    
+
     scrollViewRef.current.scrollToPosition(Math.max(0, targetY));
   };
 
@@ -149,7 +154,7 @@ export default function index() {
           </TouchableOpacity>
         </View>
 
-        <ThemedView 
+        <ThemedView
           ref={leaguesRef}
           style={styles.titleContainer}
           onLayout={handleLeaguesLayout}
@@ -173,7 +178,7 @@ export default function index() {
                     <Image source={{ uri: match.home.country_flag }} style={styles.flag} contentFit="contain" />
                   ) : match.home.country_name ? (
                     <ThemedText style={styles.countryText}>{match.home.country_name}</ThemedText>
-                  ) : null} 
+                  ) : null}
                 </ThemedView>
 
                 {/* معلومات المباراة */}
@@ -197,18 +202,18 @@ export default function index() {
                     <Image source={{ uri: match.away.country_flag }} style={styles.flag} contentFit="contain" />
                   ) : match.away.country_name ? (
                     <ThemedText style={styles.countryText}>{match.away.country_name}</ThemedText>
-                  ) : null}  
+                  ) : null}
                 </ThemedView>
               </ThemedView>
             </ThemedView>
           ))
         ) : (
           <ThemedText style={{ textAlign: "center", marginTop: 20 }}>
-            لا توجد بيانات متاحة
+            ⚠️ لا توجد بيانات متاحة
           </ThemedText>
         )}
-        
-        <ThemedView 
+
+        <ThemedView
           ref={newsRef}
           style={styles.titleContainer}
           onLayout={handleNewsLayout}
@@ -218,7 +223,7 @@ export default function index() {
           </ThemedText>
         </ThemedView>
       </ParallaxScrollView>
-      
+
       <Modal visible={menuVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.backdrop} onPress={onCloseMenu} />
         <ThemedView style={[styles.menuContainer, showSubMenu && styles.expandedMenu]}>
@@ -228,7 +233,7 @@ export default function index() {
               {showSubMenu ? '▲' : '▼'}
             </ThemedText>
           </TouchableOpacity>
-          
+
           {showSubMenu && (
             <ThemedView style={styles.subMenuContainer}>
               <TouchableOpacity onPress={() => onSelectLeague('الدوري السعودي')}>
@@ -248,7 +253,7 @@ export default function index() {
               </TouchableOpacity>
             </ThemedView>
           )}
-          
+
           <TouchableOpacity onPress={() => onSelectSection('news')}>
             <ThemedText style={styles.menuItem}>أخبار كرة القدم</ThemedText>
           </TouchableOpacity>
