@@ -53,7 +53,7 @@ export default function index() {
     }
 
     const dateStr = formatDate(targetDate);
-    const url = `https://razan771.github.io/Koora-App/assets/data/matches-${dateStr}.json`;
+    const url = `https://razan771.github.io/Koora-App/matches-${today}.json`;
 
     fetch(url)
       .then((res) => {
