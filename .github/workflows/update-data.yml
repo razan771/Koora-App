@@ -22,7 +22,7 @@ jobs:
         run: npm install
 
       - name: Run FetchMatches
-        run: node fetch-matches.js
+        run: npm run fetch
 
       - name: Deploy data to GitHub Pages
         run: npm run deploy-data
