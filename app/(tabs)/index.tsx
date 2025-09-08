@@ -288,11 +288,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#0bb33a",
+    borderColor: "#ff5733ff",
     backgroundColor: "#fff",
   },
   activeBtn: {
-    backgroundColor: "#0bb33a",
+    backgroundColor: "#ff5733ff",
   },
   toggleText: {
     fontSize: 16,
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#0bb33a',
+    borderColor: '#ff5733ff',
   },
   matchRow: {
     flexDirection: 'row',

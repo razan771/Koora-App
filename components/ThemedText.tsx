@@ -43,11 +43,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   title: {
-    color: '#0bb33a',
+    color: '#ff5733ff',
     fontSize: 30,
     fontWeight: 'bold',
     lineHeight: 40,
-    textShadowColor: '#000',
+
     textShadowOffset: { width: -1, height: 0 },
     textShadowRadius: 1,
   },

@@ -1,56 +1,65 @@
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const moment = require('moment-timezone');
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const moment = require("moment-timezone");
 
-const API_TOKEN = 's2QZWkF4KrZFiZZXPKrnLPCLzTXHI2GV5GF4gNXT9ZfQUqlmiXGgGK3t5h8Y';
-const LEAGUE_IDS = [501, 8, 82];
+const BASE_URL = "https://www.thesportsdb.com/api/v1/json/3";
+const LEAGUES = [
+  { id: 4328, name: "الدوري الإنجليزي الممتاز" },
+  { id: 4331, name: "الدوري الألماني" },
+  { id: 4480, name: "دوري أبطال أوروبا" },
+];
+
+// ⚽ تنسيق المباراة
+function formatMatch(event, leagueName) {
+  return {
+    id: event.idEvent,
+    league: leagueName,
+    date: event.dateEvent,
+    time: event.strTime,
+    home: {
+      name: event.strHomeTeam,
+      score: event.intHomeScore,
+    },
+    away: {
+      name: event.strAwayTeam,
+      score: event.intAwayScore,
+    },
+    status: event.strStatus,
+  };
+}
 
 async function fetchMatchesForDate(dateStr) {
-  const leaguesParam = LEAGUE_IDS.join(',');
-  const from = moment(dateStr).startOf('day').toISOString();
-  const to = moment(dateStr).endOf('day').toISOString();
-  const url = `https://api.sportmonks.com/v3/football/fixtures?api_token=${API_TOKEN}&leagues=${leaguesParam}&from=${from}&to=${to}&locale=ar&include=participants;participants.country;league;venue;scores`;
+  let allMatches = [];
 
+  for (const league of LEAGUES) {
+    const url = `${BASE_URL}/eventsseason.php?id=${league.id}&s=2024-2025`;
 
-  try {
-    const res = await axios.get(url);
+    try {
+      const res = await axios.get(url);
+      const events = res.data.events || [];
 
-    const matches = res.data.data.map(match => {
-      const homeTeam = match.participants?.find(p => p.meta.location === 'home');
-      const awayTeam = match.participants?.find(p => p.meta.location === 'away');
+      // فلترة حسب التاريخ المطلوب
+      const filtered = events.filter(ev => ev.dateEvent === dateStr);
+      const formatted = filtered.map(ev => formatMatch(ev, league.name));
 
-      return {
-        id: match.id,
-        league: match.league?.name_ar || match.league?.name || 'دوري غير معروف',
-        time: moment.utc(match.starting_at).tz('Asia/Dubai').format('YYYY-MM-DD HH:mm'),
-        home: {
-          name: homeTeam?.name || 'غير معروف',
-          logo: homeTeam?.image_path || null,
-          country_name: homeTeam?.country?.name || null,
-          country_flag: homeTeam?.country?.image_path || null,
-        },
-        away: {
-          name: awayTeam?.name || 'غير معروف',
-          logo: awayTeam?.image_path || null,
-          country_name: awayTeam?.country?.name || null,
-          country_flag: awayTeam?.country?.image_path || null,
-        }
-      };
-    });
-
-    const outputPath = path.resolve(__dirname, `../assets/data/matches-${dateStr}.json`);
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-    fs.writeFileSync(outputPath, JSON.stringify(matches, null, 2), 'utf-8');
-    console.log(`✅ تم حفظ مباريات ${dateStr} في: matches-${dateStr}.json`);
-  } catch (err) {
-    console.error(`❌ فشل في جلب مباريات ${dateStr}:`, err.response?.data || err.message);
+      allMatches = allMatches.concat(formatted);
+    } catch (err) {
+      console.error(`❌ فشل في جلب ${league.name}:`, err.message);
+    }
   }
+
+  // حفظ النتائج
+  const outputPath = path.resolve(__dirname, `../assets/data/matches-${dateStr}.json`);
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, JSON.stringify(allMatches, null, 2), "utf-8");
+
+  console.log(`✅ تم حفظ مباريات ${dateStr}: ${allMatches.length} مباراة`);
 }
 
 async function fetchTodayAndYesterday() {
-  const today = moment().format('YYYY-MM-DD');
-  const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+  const today = moment().format("YYYY-MM-DD");
+  const yesterday = moment().subtract(1, "day").format("YYYY-MM-DD");
 
   await fetchMatchesForDate(today);
   await fetchMatchesForDate(yesterday);
