@@ -12,20 +12,26 @@ const LEAGUES = [
 
 // ⚽ تنسيق المباراة
 function formatMatch(event, leagueName) {
+  const dateTime = event.dateEvent && event.strTime
+    ? `${event.dateEvent} ${event.strTime}`
+    : event.dateEvent || "";
+
   return {
-    id: event.idEvent,
+    id: Number(event.idEvent),
     league: leagueName,
-    date: event.dateEvent,
-    time: event.strTime,
+    time: dateTime,
     home: {
       name: event.strHomeTeam,
-      score: event.intHomeScore,
+      logo: null,           // TheSportsDB يوفر strHomeTeamBadge فقط إذا جبنا بيانات الفريق
+      country_name: null,
+      country_flag: null,
     },
     away: {
       name: event.strAwayTeam,
-      score: event.intAwayScore,
+      logo: null,
+      country_name: null,
+      country_flag: null,
     },
-    status: event.strStatus,
   };
 }
 
