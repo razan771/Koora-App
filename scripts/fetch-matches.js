@@ -5,30 +5,26 @@ const moment = require("moment-timezone");
 
 const BASE_URL = "https://www.thesportsdb.com/api/v1/json/3";
 const LEAGUES = [
-  { id: 4328, name: "الدوري الإنجليزي الممتاز" },
-  { id: 4331, name: "الدوري الألماني" },
-  { id: 4480, name: "دوري أبطال أوروبا" },
+  { id: 4328, name: "English Premier League" },
+  { id: 4331, name: "German Bundesliga" },
+  { id: 4480, name: "UEFA Champions League" },
 ];
 
 // ⚽ تنسيق المباراة
 function formatMatch(event, leagueName) {
-  const dateTime = event.dateEvent && event.strTime
-    ? `${event.dateEvent} ${event.strTime}`
-    : event.dateEvent || "";
-
   return {
     id: Number(event.idEvent),
     league: leagueName,
-    time: dateTime,
+    time: event.dateEvent && event.strTime ? `${event.dateEvent} ${event.strTime}` : event.dateEvent || "",
     home: {
       name: event.strHomeTeam,
-      logo: null,           // TheSportsDB يوفر strHomeTeamBadge فقط إذا جبنا بيانات الفريق
+      logo: event.strHomeTeamBadge || null,
       country_name: null,
       country_flag: null,
     },
     away: {
       name: event.strAwayTeam,
-      logo: null,
+      logo: event.strAwayTeamBadge || null,
       country_name: null,
       country_flag: null,
     },
@@ -39,23 +35,21 @@ async function fetchMatchesForDate(dateStr) {
   let allMatches = [];
 
   for (const league of LEAGUES) {
-    const url = `${BASE_URL}/eventsseason.php?id=${league.id}&s=2024-2025`;
+    const url = `${BASE_URL}/eventsday.php?d=${dateStr}&l=${encodeURIComponent(league.name)}`;
 
     try {
       const res = await axios.get(url);
       const events = res.data.events || [];
 
-      // فلترة حسب التاريخ المطلوب
-      const filtered = events.filter(ev => ev.dateEvent === dateStr);
-      const formatted = filtered.map(ev => formatMatch(ev, league.name));
-
+      const formatted = events.map(ev => formatMatch(ev, league.name));
       allMatches = allMatches.concat(formatted);
+
+      console.log(`✅ ${league.name}: ${formatted.length} مباراة`);
     } catch (err) {
       console.error(`❌ فشل في جلب ${league.name}:`, err.message);
     }
   }
 
-  // حفظ النتائج
   const outputPath = path.resolve(__dirname, `../assets/data/matches-${dateStr}.json`);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, JSON.stringify(allMatches, null, 2), "utf-8");
