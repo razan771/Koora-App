@@ -1,7 +1,6 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
-const moment = require("moment-timezone");
 
 const BASE_URL = "https://www.thesportsdb.com/api/v1/json/3";
 const LEAGUES = [
@@ -15,7 +14,8 @@ function formatMatch(event, leagueName) {
   return {
     id: Number(event.idEvent),
     league: leagueName,
-    time: event.dateEvent && event.strTime ? `${event.dateEvent} ${event.strTime}` : event.dateEvent || "",
+    date: event.dateEvent || null,
+    time: event.strTime || null,
     home: {
       name: event.strHomeTeam,
       logo: event.strHomeTeamBadge || null,
@@ -31,11 +31,11 @@ function formatMatch(event, leagueName) {
   };
 }
 
-async function fetchMatchesForDate(dateStr) {
+async function fetchUpcomingMatches() {
   let allMatches = [];
 
   for (const league of LEAGUES) {
-    const url = `${BASE_URL}/eventsday.php?d=${dateStr}&l=${encodeURIComponent(league.name)}`;
+    const url = `${BASE_URL}/eventsnextleague.php?id=${league.id}`;
 
     try {
       const res = await axios.get(url);
@@ -44,25 +44,17 @@ async function fetchMatchesForDate(dateStr) {
       const formatted = events.map(ev => formatMatch(ev, league.name));
       allMatches = allMatches.concat(formatted);
 
-      console.log(`✅ ${league.name}: ${formatted.length} مباراة`);
+      console.log(`✅ ${league.name}: ${formatted.length} مباراة قادمة`);
     } catch (err) {
       console.error(`❌ فشل في جلب ${league.name}:`, err.message);
     }
   }
 
-  const outputPath = path.resolve(__dirname, `../assets/data/matches-${dateStr}.json`);
+  const outputPath = path.resolve(__dirname, `../assets/data/upcoming-matches.json`);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, JSON.stringify(allMatches, null, 2), "utf-8");
 
-  console.log(`✅ تم حفظ مباريات ${dateStr}: ${allMatches.length} مباراة`);
+  console.log(`✅ تم حفظ ${allMatches.length} مباراة في upcoming-matches.json`);
 }
 
-async function fetchTodayAndYesterday() {
-  const today = moment().format("YYYY-MM-DD");
-  const yesterday = moment().subtract(1, "day").format("YYYY-MM-DD");
-
-  await fetchMatchesForDate(today);
-  await fetchMatchesForDate(yesterday);
-}
-
-fetchTodayAndYesterday();
+fetchUpcomingMatches();
