@@ -5,7 +5,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import fetchUpcomingMatches from '../../scripts/fetch-matches';
+import fetchUpcomingMatches from '../../scripts/fetchUpcomingMatches';
 
 type MatchType = {
   id: number;
