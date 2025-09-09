@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "fetch": "node scripts/fetch-matches.js",
+    "fetch": "node scripts/fetchUpcomingMatches.js",
     "deploy-data": "gh-pages -d assets/data --dest . -r https://$GH_TOKEN@github.com/razan771/Koora-App.git"
   },
   "dependencies": {
