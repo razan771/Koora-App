@@ -2,59 +2,66 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-const BASE_URL = "https://www.thesportsdb.com/api/v1/json/3";
-const LEAGUES = [
-  { id: 4328, name: "English Premier League" },
-  { id: 4331, name: "German Bundesliga" },
-  { id: 4480, name: "UEFA Champions League" },
-];
-
-// ⚽ تنسيق المباراة
-function formatMatch(event, leagueName) {
-  return {
-    id: Number(event.idEvent),
-    league: leagueName,
-    date: event.dateEvent || null,
-    time: event.strTime || null,
-    home: {
-      name: event.strHomeTeam,
-      logo: event.strHomeTeamBadge || null,
-      country_name: null,
-      country_flag: null,
-    },
-    away: {
-      name: event.strAwayTeam,
-      logo: event.strAwayTeamBadge || null,
-      country_name: null,
-      country_flag: null,
-    },
-  };
+// 🟠 دالة لإزالة التكرارات بناءً على id
+function removeDuplicates(matches) {
+  const seen = new Set();
+  return matches.filter((match) => {
+    if (seen.has(match.id)) {
+      return false;
+    }
+    seen.add(match.id);
+    return true;
+  });
 }
 
 async function fetchUpcomingMatches() {
-  let allMatches = [];
+  try {
+    const urls = [
+          "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4480", //  دوري أبطال
+      "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4331", //  الدوري الألماني
+      "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328", //  الدوري الإنجليزي
+      "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4335", //  الدوري الإسباني
+    ];
 
-  for (const league of LEAGUES) {
-    const url = `${BASE_URL}/eventsnextleague.php?id=${league.id}`;
+    let allMatches = [];
 
-    try {
-      const res = await axios.get(url);
-      const events = res.data.events || [];
+    for (const url of urls) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`❌ خطأ في الجلب من ${url}`);
+      const data = await res.json();
 
-      const formatted = events.map(ev => formatMatch(ev, league.name));
+      if (!data.events) continue;
+
+      // 🔹 تنسيق البيانات
+      const formatted = data.events.map((e) => ({
+        id: e.idEvent,
+        league: e.strLeague,
+        time: e.dateEvent + " " + e.strTime,
+        home: {
+          name: e.strHomeTeam,
+          logo: e.strHomeTeamBadge,
+          country_name: e.strCountry,
+          country_flag: e.strCountryBadge,
+        },
+        away: {
+          name: e.strAwayTeam,
+          logo: e.strAwayTeamBadge,
+          country_name: e.strCountry,
+          country_flag: e.strCountryBadge,
+        },
+      }));
+
       allMatches = allMatches.concat(formatted);
-
-      console.log(`✅ ${league.name}: ${formatted.length} مباراة قادمة`);
-    } catch (err) {
-      console.error(`❌ فشل في جلب ${league.name}:`, err.message);
     }
+
+    // 🔹 تنظيف التكرارات
+    allMatches = removeDuplicates(allMatches);
+
+    return allMatches;
+  } catch (err) {
+    console.error("⚠️ خطأ في fetchUpcomingMatches:", err.message || err);
+    return [];
   }
-
-  const outputPath = path.resolve(__dirname, `../assets/data/upcoming-matches.json`);
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, JSON.stringify(allMatches, null, 2), "utf-8");
-
-  console.log(`✅ تم حفظ ${allMatches.length} مباراة في upcoming-matches.json`);
 }
 
-fetchUpcomingMatches();
+module.exports = fetchUpcomingMatches;

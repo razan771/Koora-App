@@ -1,9 +1,11 @@
+// Index.tsx
 import ParallaxScrollView, { ParallaxScrollViewRef } from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import fetchUpcomingMatches from '../../scripts/fetch-matches';
 
 type MatchType = {
   id: number;
@@ -23,17 +25,8 @@ type MatchType = {
   };
 };
 
-// 🔹 تنسيق التاريخ المحلي
-function formatDateLocal(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export default function Index() {
   const [matches, setMatches] = useState<MatchType[]>([]);
-  const [selectedDay, setSelectedDay] = useState<"today" | "yesterday">("today");
 
   // ——— حالات العرض
   const [menuVisible, setMenuVisible] = useState(false);
@@ -47,34 +40,10 @@ export default function Index() {
   const [leaguesPosition, setLeaguesPosition] = useState(0);
   const [newsPosition, setNewsPosition] = useState(0);
 
-  // 🔹 جلب البيانات حسب اليوم المختار
-  const fetchMatches = (day: "today" | "yesterday") => {
-    const today = new Date();
-    let targetDate = today;
-
-    if (day === "yesterday") {
-      targetDate = new Date(today);
-      targetDate.setDate(today.getDate() - 1);
-    }
-
-    const dateStr = formatDateLocal(targetDate);
-    const url = `https://razan771.github.io/Koora-App/matches-${dateStr}.json`;
-
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error(`❌ فشل تحميل البيانات من ${url}`);
-        return res.json();
-      })
-      .then((data) => setMatches(data))
-      .catch((err) => {
-        console.error(`خطأ في جلب بيانات ${day}:`, err.message || err);
-        setMatches([]);
-      });
-  };
-
+  // 🔹 جلب المباريات القادمة
   useEffect(() => {
-    fetchMatches(selectedDay);
-  }, [selectedDay]);
+    fetchUpcomingMatches().then(setMatches);
+  }, []);
 
   // ——— دوال القائمة
   const onMenuPress = () => setMenuVisible(true);
@@ -137,36 +106,17 @@ export default function Index() {
         }
         onMenuPress={onMenuPress}
       >
-        {/* 🔹 أزرار اختيار اليوم / الأمس */}
-        <View style={styles.toggleButtons}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, selectedDay === "today" && styles.activeBtn]}
-            onPress={() => setSelectedDay("today")}
-          >
-            <ThemedText style={styles.toggleText}>مباريات اليوم</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.toggleBtn, selectedDay === "yesterday" && styles.activeBtn]}
-            onPress={() => setSelectedDay("yesterday")}
-          >
-            <ThemedText style={styles.toggleText}>مباريات الأمس</ThemedText>
-          </TouchableOpacity>
-        </View>
-
         <ThemedView
           ref={leaguesRef}
           style={styles.titleContainer}
           onLayout={handleLeaguesLayout}
         >
-          <ThemedText type="title">
-            {selectedDay === "today" ? "مـبـاريـات الـيـوم" : "مـبـاريـات الأمـس"}
-          </ThemedText>
+          <ThemedText type="title">المباريات القادمة</ThemedText>
         </ThemedView>
 
         {matches.length > 0 ? (
           matches.map((match) => (
-            <ThemedView key={match.id} style={styles.matchCard}>
+            <ThemedView key={`${match.id}-${match.league}`} style={styles.matchCard}>
               <ThemedView style={styles.matchRow}>
                 {/* الفريق المستضيف */}
                 <ThemedView style={styles.teamContainer}>
@@ -218,12 +168,11 @@ export default function Index() {
           style={styles.titleContainer}
           onLayout={handleNewsLayout}
         >
-          <ThemedText type="title">
-            أهم الأخبار
-          </ThemedText>
+          <ThemedText type="title">أهم الأخبار</ThemedText>
         </ThemedView>
       </ParallaxScrollView>
 
+      {/* قائمة جانبية */}
       <Modal visible={menuVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.backdrop} onPress={onCloseMenu} />
         <ThemedView style={[styles.menuContainer, showSubMenu && styles.expandedMenu]}>
@@ -277,27 +226,6 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
   },
-  toggleButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 16,
-    gap: 12,
-  },
-  toggleBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#ff5733ff",
-    backgroundColor: "#fff",
-  },
-  activeBtn: {
-    backgroundColor: "#ff5733ff",
-  },
-  toggleText: {
-    fontSize: 16,
-    color: "#000",
-  },
   matchCard: {
     width: '100%',
     minHeight: 130,
@@ -334,7 +262,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   league: {
-    paddingBottom: 4
+    paddingBottom: 4,
   },
   time: {
     fontSize: 15,
