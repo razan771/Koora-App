@@ -23,7 +23,7 @@ async function fetchUpcomingMatches() {
     ];
 
     // 📁 إنشاء مجلد assets/data لو غير موجود
-    const dir = path.join(__dirname, "assets", "data");
+    const dir = path.join(__dirname,"..", "assets", "data");
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }

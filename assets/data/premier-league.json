@@ -1,0 +1,227 @@
+[
+  {
+    "id": "2274718",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "AFC Wimbledon",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/md7iqx1684129667.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Rotherham United",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/sewy0z1752149213.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274719",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Barnsley",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/xvxsuv1447437855.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Reading",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/tprvtu1448811527.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274720",
+    "league": "English League 1",
+    "time": "2025-09-13 11:30:00",
+    "home": {
+      "name": "Bradford City",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/trwxxv1424033151.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Huddersfield Town",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/y11fin1677527513.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274721",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Burton Albion",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/uvpqpw1423804499.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Lincoln City",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/x46tji1719860130.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274722",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Exeter City",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/98wt4h1521144923.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Port Vale",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/wvpxpp1424033388.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274723",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Leyton Orient",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/g4d9bi1688678797.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Bolton Wanderers",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/yvxxrv1448808301.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274724",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Luton Town",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/v977eh1681319466.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Plymouth Argyle",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/wod5cj1689630278.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274725",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Mansfield Town",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/vqtxwt1423804415.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Stevenage",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/o4m2ci1596480474.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274726",
+    "league": "English League 1",
+    "time": "2025-09-13 11:30:00",
+    "home": {
+      "name": "Northampton Town",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/aa42641684131255.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Blackpool",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/utywru1448754934.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274727",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Peterborough United",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/tyxsvt1424033035.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Wycombe Wanderers",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/avi3bu1688678934.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274728",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Wigan Athletic",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/wtxwyw1448759640.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Doncaster Rovers",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/ssvpvx1424033260.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274729",
+    "league": "English League 1",
+    "time": "2025-09-13 14:00:00",
+    "home": {
+      "name": "Stockport County",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/jcsz9k1594450753.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Cardiff City",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/xtytpt1448808285.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274730",
+    "league": "English League 1",
+    "time": "2025-09-20 11:30:00",
+    "home": {
+      "name": "Blackpool",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/utywru1448754934.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Barnsley",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/xvxsuv1447437855.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274731",
+    "league": "English League 1",
+    "time": "2025-09-20 11:30:00",
+    "home": {
+      "name": "Bolton Wanderers",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/yvxxrv1448808301.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "Wigan Athletic",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/wtxwyw1448759640.png",
+      "country_name": "England"
+    }
+  },
+  {
+    "id": "2274732",
+    "league": "English League 1",
+    "time": "2025-09-20 14:00:00",
+    "home": {
+      "name": "Doncaster Rovers",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/ssvpvx1424033260.png",
+      "country_name": "England"
+    },
+    "away": {
+      "name": "AFC Wimbledon",
+      "logo": "https://r2.thesportsdb.com/images/media/team/badge/md7iqx1684129667.png",
+      "country_name": "England"
+    }
+  }
+]
