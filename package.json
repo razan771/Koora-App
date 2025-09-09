@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "fetch": "node scripts/fetch-matches.js",
-    "deploy-data": "gh-pages -d assets/data -r https://$GH_TOKEN@github.com/razan771/Koora-App.git"
+    "deploy-data": "gh-pages -d assets/data --dest . -r https://$GH_TOKEN@github.com/razan771/Koora-App.git"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
