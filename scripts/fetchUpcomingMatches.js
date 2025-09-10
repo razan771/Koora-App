@@ -15,80 +15,73 @@ function removeDuplicates(matches) {
 
 async function fetchUpcomingMatches() {
   try {
-    const leagues = [
-      { id: 4480, file: "champions-league.json", name: "دوري أبطال أوروبا" },
-      { id: 4331, file: "bundesliga.json", name: "الدوري الألماني" },
-      { id: 4328, file: "premier-league.json", name: "الدوري الإنجليزي" },
-      { id: 4335, file: "laliga.json", name: "الدوري الإسباني" },
+    const urls = [
+      {
+        id: 4480,
+        league: { ar: "دوري أبطال أوروبا", en: "UEFA Champions League" },
+      },
+      {
+        id: 4331,
+        league: { ar: "الدوري الألماني", en: "Bundesliga" },
+      },
+      {
+        id: 4328,
+        league: { ar: "الدوري الإنجليزي الممتاز", en: "Premier League" },
+      },
+      {
+        id: 4335,
+        league: { ar: "الدوري الإسباني", en: "La Liga" },
+      },
     ];
-
-    // 📁 إنشاء مجلد assets/data لو غير موجود
-    const dir = path.join(__dirname,"..", "assets", "data");
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
 
     let allMatches = [];
 
-    for (const league of leagues) {
-      const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${league.id}`;
+    for (const { id, league } of urls) {
+      const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${id}`;
       const res = await fetch(url);
+
       if (!res.ok) throw new Error(`❌ خطأ في الجلب من ${url}`);
       const data = await res.json();
 
       if (!data.events) continue;
 
       // 🔹 تنسيق البيانات
-      let formatted = data.events.map((e) => ({
+      const formatted = data.events.map((e) => ({
         id: e.idEvent,
-        league: e.strLeague,
+        league, // يحتوي على { ar, en }
         time: e.dateEvent + " " + e.strTime,
         home: {
-          name: e.strHomeTeam,
-          logo: e.strHomeTeamBadge,
-          country_name: e.strCountry,
-          country_flag: e.strCountryBadge,
+          name: { ar: e.strHomeTeam, en: e.strHomeTeam }, // هنا ممكن نطور لاحقاً لإضافة أسماء مترجمة
+          logo: e.strHomeTeamBadge || null,
         },
         away: {
-          name: e.strAwayTeam,
-          logo: e.strAwayTeamBadge,
-          country_name: e.strCountry,
-          country_flag: e.strCountryBadge,
+          name: { ar: e.strAwayTeam, en: e.strAwayTeam },
+          logo: e.strAwayTeamBadge || null,
         },
       }));
 
-      // 🔹 إزالة التكرارات داخل الدوري نفسه
-      formatted = removeDuplicates(formatted);
-
-      // 📝 حفظ بيانات الدوري في ملف مستقل
-      const filePath = path.join(dir, league.file);
-      fs.writeFileSync(filePath, JSON.stringify(formatted, null, 2), "utf-8");
-
-      console.log(`✅ تم حفظ ${formatted.length} مباراة في ${filePath}`);
-
-      // إضافة لمجموعة المباريات الشاملة
       allMatches = allMatches.concat(formatted);
     }
 
-    // 🔹 إزالة التكرارات من جميع المباريات المجمعة
+    // 🔹 تنظيف التكرارات
     allMatches = removeDuplicates(allMatches);
 
-    // 📝 حفظ ملف شامل لكل المباريات
-    const allFilePath = path.join(dir, "upcoming-matches.json");
-    fs.writeFileSync(allFilePath, JSON.stringify(allMatches, null, 2), "utf-8");
+    // 📁 إنشاء مجلد assets/data في جذر المشروع
+    const dir = path.join(__dirname, "..", "assets", "data");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
 
-    console.log(`📦 تم حفظ ملف شامل (${allMatches.length} مباراة) في ${allFilePath}`);
+    // 📝 كتابة النتائج في ملف JSON
+    const filePath = path.join(dir, "upcoming-matches.json");
+    fs.writeFileSync(filePath, JSON.stringify(allMatches, null, 2), "utf-8");
 
-    return allMatches;
+    console.log(`✅ تم حفظ ${allMatches.length} مباراة في ${filePath}`);
   } catch (err) {
     console.error("⚠️ خطأ في fetchUpcomingMatches:", err.message || err);
-    return [];
   }
 }
 
-module.exports = fetchUpcomingMatches;
+fetchUpcomingMatches();
 
-// ✨ للتشغيل المباشر من Node
-if (require.main === module) {
-  fetchUpcomingMatches();
-}
+module.exports = fetchUpcomingMatches;

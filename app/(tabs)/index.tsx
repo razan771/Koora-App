@@ -1,38 +1,33 @@
-// Index.tsx
 import ParallaxScrollView, { ParallaxScrollViewRef } from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import fetchUpcomingMatches from '../../scripts/fetchUpcomingMatches';
 
 type MatchType = {
   id: number;
-  league: string;
-  time: string;
+  league: { ar: string; en: string };
+  time?: string | null;
   home: {
-    name: string;
-    logo?: string;
-    country_name?: string;
-    country_flag?: string;
+    name: { ar: string; en: string };
+    logo?: string | null;
   };
   away: {
-    name: string;
-    logo?: string;
-    country_name?: string;
-    country_flag?: string;
+    name: { ar: string; en: string };
+    logo?: string | null;
   };
 };
 
 export default function Index() {
   const [matches, setMatches] = useState<MatchType[]>([]);
+  const [language, setLanguage] = useState<'ar' | 'en'>('ar'); // ✅ حالة اللغة الموحدة
 
-  // ——— حالات العرض
+  // ——— حالات القائمة
   const [menuVisible, setMenuVisible] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
 
-  // ——— مراجع ScrollView والأقسام
+  // ——— مراجع ScrollView
   const scrollViewRef = useRef<ParallaxScrollViewRef>(null);
   const leaguesRef = useRef<View>(null);
   const newsRef = useRef<View>(null);
@@ -41,9 +36,29 @@ export default function Index() {
   const [newsPosition, setNewsPosition] = useState(0);
 
   // 🔹 جلب المباريات القادمة
+  const fetchUpcoming = () => {
+    const url = `https://razan771.github.io/Koora-App/upcoming-matches.json`;
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`❌ فشل تحميل البيانات من ${url}`);
+        return res.json();
+      })
+      .then((data) => setMatches(data))
+      .catch((err) => {
+        console.error("خطأ في جلب المباريات:", err.message || err);
+        setMatches([]);
+      });
+  };
+
   useEffect(() => {
-    fetchUpcomingMatches().then(setMatches);
+    fetchUpcoming();
   }, []);
+
+  // ——— تبديل اللغة
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === 'ar' ? 'en' : 'ar'));
+  };
 
   // ——— دوال القائمة
   const onMenuPress = () => setMenuVisible(true);
@@ -51,7 +66,6 @@ export default function Index() {
     setMenuVisible(false);
     setShowSubMenu(false);
   };
-
   const toggleSubMenu = () => setShowSubMenu(!showSubMenu);
 
   const handleFirstOption = () => {
@@ -66,7 +80,6 @@ export default function Index() {
     const { y } = event.nativeEvent.layout;
     setLeaguesPosition(y);
   };
-
   const handleNewsLayout = (event: any) => {
     const { y } = event.nativeEvent.layout;
     setNewsPosition(y);
@@ -74,14 +87,9 @@ export default function Index() {
 
   const scrollToSection = (section: 'leagues' | 'news') => {
     if (!scrollViewRef.current) return;
-
     let targetY = 0;
-    if (section === 'leagues') {
-      targetY = leaguesPosition - 50;
-    } else if (section === 'news') {
-      targetY = newsPosition - 50;
-    }
-
+    if (section === 'leagues') targetY = leaguesPosition - 50;
+    else if (section === 'news') targetY = newsPosition - 50;
     scrollViewRef.current.scrollToPosition(Math.max(0, targetY));
   };
 
@@ -105,61 +113,68 @@ export default function Index() {
           <Image source={require('@/assets/images/headerImage.jpg')} style={styles.reactLogo} />
         }
         onMenuPress={onMenuPress}
+        onLangChange={toggleLanguage} // ✅ ربط زر اللغة
       >
         <ThemedView
           ref={leaguesRef}
           style={styles.titleContainer}
           onLayout={handleLeaguesLayout}
         >
-          <ThemedText type="title">المباريات القادمة</ThemedText>
+          <ThemedText type="title">
+            {language === 'ar' ? 'المباريات القادمة' : 'Upcoming Matches'}
+          </ThemedText>
         </ThemedView>
 
         {matches.length > 0 ? (
           matches.map((match) => (
-            <ThemedView key={`${match.id}-${match.league}`} style={styles.matchCard}>
-              <ThemedView style={styles.matchRow}>
-                {/* الفريق المستضيف */}
-                <ThemedView style={styles.teamContainer}>
-                  {match.home.logo && (
-                    <Image source={{ uri: match.home.logo }} style={styles.logo} contentFit="contain" />
-                  )}
-                  <ThemedText style={styles.teamName}>{match.home.name}</ThemedText>
-                  {match.home.country_flag ? (
-                    <Image source={{ uri: match.home.country_flag }} style={styles.flag} contentFit="contain" />
-                  ) : match.home.country_name ? (
-                    <ThemedText style={styles.countryText}>{match.home.country_name}</ThemedText>
-                  ) : null}
-                </ThemedView>
+            <ThemedView key={match.id} style={styles.matchCard}>
+              {/* اسم الدوري */}
+              <ThemedText style={styles.league}>
+                {match.league[language]}
+              </ThemedText>
 
-                {/* معلومات المباراة */}
-                <ThemedView style={styles.middleInfo}>
-                  <ThemedText type="defaultSemiBold" style={styles.league}>{match.league}</ThemedText>
-                  <ThemedText style={styles.time}>
-                    {new Date(match.time).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+              {/* صف الفرق */}
+              <View style={styles.matchRow}>
+                {/* الفريق المستضيف */}
+                <View style={styles.teamContainer}>
+                  {match.home.logo && (
+                    <Image
+                      source={{ uri: match.home.logo }}
+                      style={styles.logo}
+                      contentFit="contain"
+                    />
+                  )}
+                  <ThemedText style={styles.teamName}>
+                    {match.home.name[language]}
                   </ThemedText>
-                </ThemedView>
+                </View>
+
+                {/* التاريخ والوقت */}
+                <View style={styles.timeContainer}>
+                  <ThemedText style={styles.time}>
+                    {match.time || ''}
+                  </ThemedText>
+                </View>
 
                 {/* الفريق الضيف */}
-                <ThemedView style={styles.teamContainer}>
+                <View style={styles.teamContainer}>
                   {match.away.logo && (
-                    <Image source={{ uri: match.away.logo }} style={styles.logo} contentFit="contain" />
+                    <Image
+                      source={{ uri: match.away.logo }}
+                      style={styles.logo}
+                      contentFit="contain"
+                    />
                   )}
-                  <ThemedText style={styles.teamName}>{match.away.name}</ThemedText>
-                  {match.away.country_flag ? (
-                    <Image source={{ uri: match.away.country_flag }} style={styles.flag} contentFit="contain" />
-                  ) : match.away.country_name ? (
-                    <ThemedText style={styles.countryText}>{match.away.country_name}</ThemedText>
-                  ) : null}
-                </ThemedView>
-              </ThemedView>
+                  <ThemedText style={styles.teamName}>
+                    {match.away.name[language]}
+                  </ThemedText>
+                </View>
+              </View>
             </ThemedView>
           ))
         ) : (
           <ThemedText style={{ textAlign: "center", marginTop: 20 }}>
-            ⚠️ لا توجد بيانات متاحة
+            {language === 'ar' ? '⚠️ لا توجد بيانات متاحة' : '⚠️ No data available'}
           </ThemedText>
         )}
 
@@ -168,16 +183,20 @@ export default function Index() {
           style={styles.titleContainer}
           onLayout={handleNewsLayout}
         >
-          <ThemedText type="title">أهم الأخبار</ThemedText>
+          <ThemedText type="title">
+            {language === 'ar' ? 'أهم الأخبار' : 'Top News'}
+          </ThemedText>
         </ThemedView>
       </ParallaxScrollView>
 
-      {/* قائمة جانبية */}
+      {/* القائمة الجانبية */}
       <Modal visible={menuVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.backdrop} onPress={onCloseMenu} />
         <ThemedView style={[styles.menuContainer, showSubMenu && styles.expandedMenu]}>
           <TouchableOpacity onPress={handleFirstOption} style={styles.menuItemContainer}>
-            <ThemedText style={styles.menuItem}>الدوريات</ThemedText>
+            <ThemedText style={styles.menuItem}>
+              {language === 'ar' ? 'الدوريات' : 'Leagues'}
+            </ThemedText>
             <ThemedText style={[styles.arrow, showSubMenu && styles.arrowRotated]}>
               {showSubMenu ? '▲' : '▼'}
             </ThemedText>
@@ -185,26 +204,28 @@ export default function Index() {
 
           {showSubMenu && (
             <ThemedView style={styles.subMenuContainer}>
-              <TouchableOpacity onPress={() => onSelectLeague('الدوري السعودي')}>
-                <ThemedText style={styles.subMenuItem}>الدوري السعودي</ThemedText>
-              </TouchableOpacity>
               <TouchableOpacity onPress={() => onSelectLeague('الدوري الإنجليزي')}>
-                <ThemedText style={styles.subMenuItem}>الدوري الإنجليزي</ThemedText>
+                <ThemedText style={styles.subMenuItem}>
+                  {language === 'ar' ? 'الدوري الإنجليزي' : 'Premier League'}
+                </ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onSelectLeague('الدوري الإسباني')}>
-                <ThemedText style={styles.subMenuItem}>الدوري الإسباني</ThemedText>
+              <TouchableOpacity onPress={() => onSelectLeague('الدوري الألماني')}>
+                <ThemedText style={styles.subMenuItem}>
+                  {language === 'ar' ? 'الدوري الألماني' : 'Bundesliga'}
+                </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => onSelectLeague('دوري أبطال أوروبا')}>
-                <ThemedText style={styles.subMenuItem}>دوري أبطال أوروبا</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => onSelectLeague('كأس العالم')}>
-                <ThemedText style={styles.subMenuItem}>كأس العالم</ThemedText>
+                <ThemedText style={styles.subMenuItem}>
+                  {language === 'ar' ? 'دوري أبطال أوروبا' : 'UEFA Champions League'}
+                </ThemedText>
               </TouchableOpacity>
             </ThemedView>
           )}
 
           <TouchableOpacity onPress={() => onSelectSection('news')}>
-            <ThemedText style={styles.menuItem}>أخبار كرة القدم</ThemedText>
+            <ThemedText style={styles.menuItem}>
+              {language === 'ar' ? 'أخبار كرة القدم' : 'Football News'}
+            </ThemedText>
           </TouchableOpacity>
         </ThemedView>
       </Modal>
@@ -213,11 +234,7 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 30,
-  },
+  titleContainer: { flex: 1, alignItems: 'center', gap: 30 },
   reactLogo: {
     resizeMode: 'cover',
     height: 178,
@@ -228,65 +245,62 @@ const styles = StyleSheet.create({
   },
   matchCard: {
     width: '100%',
-    minHeight: 130,
-    padding: 12,
-    marginBottom: 16,
-    borderRadius: 10,
+    minHeight: 160,
+    padding: 16,
+    marginBottom: 20,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#ff5733ff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  league: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   matchRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
+    marginTop: 12,
   },
   teamContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 80,
+    width: 100,
   },
   logo: {
-    width: 50,
-    height: 50,
+    width: 55,
+    height: 55,
     marginBottom: 6,
   },
   teamName: {
     fontSize: 14,
     textAlign: 'center',
-    writingDirection: 'rtl',
+    fontWeight: '500',
   },
-  middleInfo: {
+  timeContainer: {
+    flex: 1, // ✅ ياخذ المساحة الباقية بالمنتصف
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-  },
-  league: {
-    paddingBottom: 4,
   },
   time: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#000',
     backgroundColor: '#e0e0e0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    textAlign: 'center',
   },
-  flag: {
-    width: 24,
-    height: 16,
-    marginTop: 4,
-    borderRadius: 2,
-  },
-  countryText: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
+
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
   menuContainer: {
     flexDirection: 'column',
     position: 'absolute',
@@ -294,16 +308,15 @@ const styles = StyleSheet.create({
     left: 20,
     right: 80,
     borderRadius: 8,
-    borderColor: "black",
+    borderColor: 'black',
     borderWidth: 1,
     padding: 16,
     alignContent: 'center',
     alignItems: 'center',
     maxHeight: 300,
+    backgroundColor: '#fff',
   },
-  expandedMenu: {
-    maxHeight: 500,
-  },
+  expandedMenu: { maxHeight: 500 },
   menuItemContainer: {
     flexDirection: 'row',
     writingDirection: 'rtl',
@@ -312,19 +325,9 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 12,
   },
-  menuItem: {
-    fontSize: 18,
-    paddingVertical: 12,
-    flex: 1,
-  },
-  arrow: {
-    fontSize: 16,
-    marginLeft: 10,
-    color: '#666',
-  },
-  arrowRotated: {
-    transform: [{ rotate: '180deg' }],
-  },
+  menuItem: { fontSize: 18, paddingVertical: 12, flex: 1 },
+  arrow: { fontSize: 16, marginLeft: 10, color: '#666' },
+  arrowRotated: { transform: [{ rotate: '180deg' }] },
   subMenuContainer: {
     width: '100%',
     backgroundColor: '#f5f5f5',
@@ -333,10 +336,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
-  subMenuItem: {
-    fontSize: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    color: '#333',
-  },
+  subMenuItem: { fontSize: 16, paddingVertical: 8, paddingHorizontal: 12, color: '#333' },
 });
