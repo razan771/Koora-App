@@ -5,11 +5,18 @@ const path = require("path");
 function removeDuplicates(matches) {
   const seen = new Set();
   return matches.filter((match) => {
-    if (seen.has(match.id)) {
-      return false;
-    }
+    if (seen.has(match.id)) return false;
     seen.add(match.id);
     return true;
+  });
+}
+
+// 🟠 دالة لترتيب المباريات حسب الوقت
+function sortByTime(matches) {
+  return matches.sort((a, b) => {
+    const dateA = new Date(a.time);
+    const dateB = new Date(b.time);
+    return dateA - dateB;
   });
 }
 
@@ -51,11 +58,11 @@ async function fetchUpcomingMatches() {
 
       if (!data.events) continue;
 
-      // 🔹 تنسيق بيانات هذا الدوري
+      // 🔹 تنسيق البيانات
       const formatted = data.events.map((e) => ({
         id: e.idEvent,
-        league, // يحتوي على { ar, en }
-        time: e.dateEvent + " " + e.strTime,
+        league,
+        time: `${e.dateEvent} ${e.strTime}`,
         home: {
           name: { ar: e.strHomeTeam, en: e.strHomeTeam },
           logo: e.strHomeTeamBadge || null,
@@ -66,17 +73,16 @@ async function fetchUpcomingMatches() {
         },
       }));
 
-      // ✅ أضف مباريات هذا الدوري إلى المجموع
-      allMatches = allMatches.concat(formatted);
-
-      // 📝 احفظ ملف منفصل لكل دوري
+      // 📝 كتابة ملف خاص بالدوري
       const leagueFile = path.join(dir, `${id}.json`);
       fs.writeFileSync(leagueFile, JSON.stringify(formatted, null, 2), "utf-8");
-      console.log(`📂 تم حفظ ${formatted.length} مباراة في ${leagueFile}`);
+      console.log(`✅ تم حفظ ${formatted.length} مباراة في ${leagueFile}`);
+
+      allMatches = allMatches.concat(formatted);
     }
 
-    // 🔹 تنظيف التكرارات
-    allMatches = removeDuplicates(allMatches);
+    // 🔹 تنظيف التكرارات + ترتيب حسب الوقت
+    allMatches = sortByTime(removeDuplicates(allMatches));
 
     // 📝 كتابة الملف الشامل
     const filePath = path.join(dir, "upcoming-matches.json");
