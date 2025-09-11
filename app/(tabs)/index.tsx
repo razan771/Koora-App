@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   arrowRotated: { transform: [{ rotate: '180deg' }] },
   subMenuContainer: {
     width: '100%',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5ff',
     borderRadius: 6,
     padding: 8,
     marginTop: 8,

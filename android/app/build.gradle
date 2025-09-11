@@ -87,7 +87,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.razan2001.koora'
+    namespace "com.koora"
     defaultConfig {
         applicationId 'com.razan2001.koora'
         minSdkVersion rootProject.ext.minSdkVersion

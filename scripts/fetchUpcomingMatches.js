@@ -15,7 +15,7 @@ function removeDuplicates(matches) {
 
 async function fetchUpcomingMatches() {
   try {
-    const leagues = [
+    const urls = [
       {
         id: 4480,
         league: { ar: "دوري أبطال أوروبا", en: "UEFA Champions League" },
@@ -36,13 +36,13 @@ async function fetchUpcomingMatches() {
 
     let allMatches = [];
 
-    // 📁 مجلد الحفظ
+    // 📁 إنشاء مجلد assets/data في جذر المشروع
     const dir = path.join(__dirname, "..", "assets", "data");
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    for (const { id, league } of leagues) {
+    for (const { id, league } of urls) {
       const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${id}`;
       const res = await fetch(url);
 
@@ -51,10 +51,10 @@ async function fetchUpcomingMatches() {
 
       if (!data.events) continue;
 
-      // 🔹 تنسيق بيانات الدوري الحالي
-      const matches = data.events.map((e) => ({
+      // 🔹 تنسيق بيانات هذا الدوري
+      const formatted = data.events.map((e) => ({
         id: e.idEvent,
-        league,
+        league, // يحتوي على { ar, en }
         time: e.dateEvent + " " + e.strTime,
         home: {
           name: { ar: e.strHomeTeam, en: e.strHomeTeam },
@@ -66,33 +66,28 @@ async function fetchUpcomingMatches() {
         },
       }));
 
-      // 🔹 تنظيف التكرارات
-      const uniqueMatches = removeDuplicates(matches);
+      // ✅ أضف مباريات هذا الدوري إلى المجموع
+      allMatches = allMatches.concat(formatted);
 
-      // 📝 حفظ ملف خاص بالدوري
-      const leagueFile = path.join(dir, `league-${id}.json`);
-      fs.writeFileSync(
-        leagueFile,
-        JSON.stringify(uniqueMatches, null, 2),
-        "utf-8"
-      );
-      console.log(
-        `✅ ${league.en}: حفظ ${uniqueMatches.length} مباراة في ${leagueFile}`
-      );
-
-      allMatches = allMatches.concat(uniqueMatches);
+      // 📝 احفظ ملف منفصل لكل دوري
+      const leagueFile = path.join(dir, `${id}.json`);
+      fs.writeFileSync(leagueFile, JSON.stringify(formatted, null, 2), "utf-8");
+      console.log(`📂 تم حفظ ${formatted.length} مباراة في ${leagueFile}`);
     }
 
-    // 🔹 حفظ جميع المباريات في ملف شامل
+    // 🔹 تنظيف التكرارات
     allMatches = removeDuplicates(allMatches);
-    const allFile = path.join(dir, "upcoming-matches.json");
-    fs.writeFileSync(allFile, JSON.stringify(allMatches, null, 2), "utf-8");
-    console.log(
-      `📦 تم حفظ ${allMatches.length} مباراة في الملف الشامل upcoming-matches.json`
-    );
+
+    // 📝 كتابة الملف الشامل
+    const filePath = path.join(dir, "upcoming-matches.json");
+    fs.writeFileSync(filePath, JSON.stringify(allMatches, null, 2), "utf-8");
+
+    console.log(`✅ تم حفظ ${allMatches.length} مباراة في ${filePath}`);
   } catch (err) {
     console.error("⚠️ خطأ في fetchUpcomingMatches:", err.message || err);
   }
 }
 
 fetchUpcomingMatches();
+
+module.exports = fetchUpcomingMatches;
