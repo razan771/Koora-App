@@ -56,12 +56,19 @@ async function fetchUpcomingMatches() {
       if (!res.ok) throw new Error(`❌ خطأ في الجلب من ${url}`);
       const data = await res.json();
 
+      console.log(
+        `🎯 الدوري: ${league.en} (${id}) - عدد الأحداث: ${
+          data.events ? data.events.length : 0
+        }`
+      );
+
       if (!data.events) continue;
 
       // 🔹 تنسيق البيانات
       const formatted = data.events.map((e) => ({
         id: e.idEvent,
         league,
+        leagueId: id, // 🆕 لتتبع الدوري
         time: `${e.dateEvent} ${e.strTime}`,
         home: {
           name: { ar: e.strHomeTeam, en: e.strHomeTeam },
@@ -88,7 +95,7 @@ async function fetchUpcomingMatches() {
     const filePath = path.join(dir, "upcoming-matches.json");
     fs.writeFileSync(filePath, JSON.stringify(allMatches, null, 2), "utf-8");
 
-    console.log(`✅ تم حفظ ${allMatches.length} مباراة في ${filePath}`);
+    console.log(`📦 الملف الشامل: ${allMatches.length} مباراة في ${filePath}`);
   } catch (err) {
     console.error("⚠️ خطأ في fetchUpcomingMatches:", err.message || err);
   }
