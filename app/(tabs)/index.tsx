@@ -2,7 +2,7 @@ import ParallaxScrollView, { ParallaxScrollViewRef } from '@/components/Parallax
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Image } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 type MatchType = {
