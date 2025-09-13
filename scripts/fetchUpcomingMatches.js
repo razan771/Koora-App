@@ -20,8 +20,8 @@ function sortByTime(matches) {
   });
 }
 
-// 🟠 دالة لجلب مباريات دوري معين (قادمة أو سابقة)
-async function fetchLeagueMatches(id, league) {
+// 🟠 دالة لجلب مباريات دوري معين وحفظها في ملف مستقل
+async function fetchLeagueMatches(id, league, filename) {
   const dir = path.join(__dirname, "..", "assets", "data");
   const urls = [
     `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${id}`, // القادمة
@@ -51,9 +51,11 @@ async function fetchLeagueMatches(id, league) {
       }));
 
       // 📝 حفظ الملف الخاص بالدوري
-      const leagueFile = path.join(dir, `${id}.json`);
+      const leagueFile = path.join(dir, filename);
       fs.writeFileSync(leagueFile, JSON.stringify(formatted, null, 2), "utf-8");
-      console.log(`✅ ${league.en}: تم حفظ ${formatted.length} مباراة`);
+      console.log(
+        `✅ ${league.en}: تم حفظ ${formatted.length} مباراة في ${filename}`
+      );
 
       return formatted;
     }
@@ -65,27 +67,37 @@ async function fetchLeagueMatches(id, league) {
 
 async function fetchUpcomingMatches() {
   try {
-    const urls = [
-      {
-        id: 4480,
-        league: { ar: "دوري أبطال أوروبا", en: "UEFA Champions League" },
-      },
-      { id: 4331, league: { ar: "الدوري الألماني", en: "Bundesliga" } },
+    const leagues = [
       {
         id: 4328,
         league: { ar: "الدوري الإنجليزي الممتاز", en: "Premier League" },
+        filename: "premier.json",
       },
-      { id: 4335, league: { ar: "الدوري الإسباني", en: "La Liga" } },
+      {
+        id: 4335,
+        league: { ar: "الدوري الإسباني", en: "La Liga" },
+        filename: "laliga.json",
+      },
+      {
+        id: 4331,
+        league: { ar: "الدوري الألماني", en: "Bundesliga" },
+        filename: "bundesliga.json",
+      },
+      {
+        id: 4480,
+        league: { ar: "دوري أبطال أوروبا", en: "UEFA Champions League" },
+        filename: "ucl.json",
+      },
     ];
 
-    let allMatches = [];
-
-    // 📁 إنشاء مجلد assets/data
     const dir = path.join(__dirname, "..", "assets", "data");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    for (const { id, league } of urls) {
-      const leagueMatches = await fetchLeagueMatches(id, league);
+    let allMatches = [];
+
+    // 🟠 جلب كل دوري على حدة
+    for (const { id, league, filename } of leagues) {
+      const leagueMatches = await fetchLeagueMatches(id, league, filename);
       allMatches = allMatches.concat(leagueMatches);
     }
 
