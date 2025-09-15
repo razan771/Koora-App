@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const fetch = require("node-fetch"); // تأكدي من تثبيت node-fetch إذا لم يكن موجود
+const fetch = require("node-fetch");
 
 // 🟠 دالة لإزالة التكرارات بناءً على id
 function removeDuplicates(matches) {
@@ -21,7 +21,12 @@ function sortByTime(matches) {
   });
 }
 
-// 🟠 دالة لجلب مباريات دوري معين وحفظها في ملف مستقل
+// 🟠 إضافة تأخير للتأكد من اكتمال العمليات
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// 🟠 دالة لجلب مباريات دوري معين وإرجاع البيانات مباشرة
 async function fetchLeagueMatches(id, league, filename) {
   const dir = path.join(__dirname, "..", "assets", "data");
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -32,15 +37,25 @@ async function fetchLeagueMatches(id, league, filename) {
     `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=${id}`, // السابقة
   ];
 
+  console.log(`🔄 بدء جلب بيانات ${league.en}...`);
+
   for (const url of urls) {
     try {
+      console.log(`📡 جلب من: ${url}`);
       const res = await fetch(url);
+
       if (!res.ok) {
-        console.warn(`❌ خطأ في الجلب من ${url}`);
+        console.warn(`❌ خطأ HTTP ${res.status} من ${url}`);
         continue;
       }
 
       const data = await res.json();
+      console.log(
+        `📊 البيانات المستلمة:`,
+        data.events ? data.events.length : 0,
+        `مباراة`
+      );
+
       if (data.events && data.events.length > 0) {
         const formatted = data.events.map((e) => ({
           id: e.idEvent,
@@ -58,6 +73,9 @@ async function fetchLeagueMatches(id, league, filename) {
         }));
         allEvents = allEvents.concat(formatted);
       }
+
+      // تأخير بين الطلبات لتجنب Rate Limiting
+      await delay(500);
     } catch (err) {
       console.error(`⚠️ خطأ في fetch من ${url}:`, err.message || err);
     }
@@ -65,16 +83,23 @@ async function fetchLeagueMatches(id, league, filename) {
 
   // حفظ الملف الخاص بالدوري
   if (allEvents.length > 0) {
-    const leagueFile = path.join(dir, filename);
-    fs.writeFileSync(leagueFile, JSON.stringify(allEvents, null, 2), "utf-8");
-    console.log(
-      `✅ ${league.en}: تم حفظ ${allEvents.length} مباراة في ${filename}`
-    );
+    try {
+      const leagueFile = path.join(dir, filename);
+      fs.writeFileSync(leagueFile, JSON.stringify(allEvents, null, 2), "utf-8");
+      console.log(
+        `✅ ${league.en}: تم حفظ ${allEvents.length} مباراة في ${filename}`
+      );
+
+      // تأخير للتأكد من اكتمال الكتابة
+      await delay(100);
+    } catch (writeErr) {
+      console.error(`❌ خطأ في كتابة ملف ${filename}:`, writeErr.message);
+    }
   } else {
     console.log(`⚠️ لا يوجد بيانات لدوري ${league.en}`);
   }
 
-  return allEvents;
+  return allEvents; // إرجاع البيانات مباشرة بدلاً من قراءتها من الملف
 }
 
 // 🟠 دالة لجلب كل الدوريات ودمجها في ملف شامل
@@ -97,6 +122,16 @@ async function fetchUpcomingMatches() {
         filename: "bundesliga.json",
       },
       {
+        id: 4332, // تغيير معرف دوري الأبطال
+        league: { ar: "الدوري الفرنسي", en: "Ligue 1" },
+        filename: "ligue1.json",
+      },
+      {
+        id: 4334,
+        league: { ar: "الدوري الإيطالي", en: "Serie A" },
+        filename: "seriea.json",
+      },
+      {
         id: 4480,
         league: { ar: "دوري أبطال أوروبا", en: "UEFA Champions League" },
         filename: "ucl.json",
@@ -108,36 +143,87 @@ async function fetchUpcomingMatches() {
 
     let allMatches = [];
 
-    // جلب كل دوري على حدة
-    for (const { id, league, filename } of leagues) {
-      await fetchLeagueMatches(id, league, filename);
-      // قراءة الملف بعد حفظه لضمان دمج كل المباريات
-      const filePath = path.join(dir, filename);
-      if (fs.existsSync(filePath)) {
-        const leagueMatches = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-        allMatches = allMatches.concat(leagueMatches);
+    console.log(`🚀 بدء جلب ${leagues.length} دوري...`);
+
+    // جلب كل دوري على حدة مع معالجة أفضل للأخطاء
+    for (let i = 0; i < leagues.length; i++) {
+      const { id, league, filename } = leagues[i];
+      console.log(`\n📋 ${i + 1}/${leagues.length} - معالجة ${league.en}...`);
+
+      try {
+        // جلب البيانات مباشرة بدلاً من قراءة الملف
+        const leagueMatches = await fetchLeagueMatches(id, league, filename);
+
+        if (leagueMatches && leagueMatches.length > 0) {
+          allMatches = allMatches.concat(leagueMatches);
+          console.log(
+            `✅ تم إضافة ${leagueMatches.length} مباراة من ${league.en}`
+          );
+        } else {
+          console.log(`⚠️ لم يتم العثور على مباريات لـ ${league.en}`);
+        }
+
+        // تأخير بين الدوريات
+        if (i < leagues.length - 1) {
+          await delay(1000);
+        }
+      } catch (leagueError) {
+        console.error(`❌ خطأ في معالجة ${league.en}:`, leagueError.message);
+        continue; // تجاهل هذا الدوري والانتقال للتالي
       }
     }
 
+    console.log(`\n📊 إجمالي المباريات المجمعة: ${allMatches.length}`);
+
+    if (allMatches.length === 0) {
+      console.error("❌ لم يتم جلب أي مباريات!");
+      return;
+    }
+
     // تنظيف التكرارات + ترتيب حسب الوقت
+    const originalCount = allMatches.length;
     allMatches = sortByTime(removeDuplicates(allMatches));
 
-    // كتابة الملف الشامل
-    const upcomingFile = path.join(dir, "upcoming-matches.json");
-    fs.writeFileSync(
-      upcomingFile,
-      JSON.stringify(allMatches, null, 2),
-      "utf-8"
-    );
+    if (originalCount !== allMatches.length) {
+      console.log(
+        `🧹 تم حذف ${originalCount - allMatches.length} مباراة مكررة`
+      );
+    }
 
-    console.log(
-      `📦 الملف الشامل upcoming-matches.json: ${allMatches.length} مباراة`
-    );
+    // كتابة الملف الشامل
+    try {
+      const upcomingFile = path.join(dir, "upcoming-matches.json");
+      fs.writeFileSync(
+        upcomingFile,
+        JSON.stringify(allMatches, null, 2),
+        "utf-8"
+      );
+
+      console.log(`\n📦 تم إنشاء الملف الشامل upcoming-matches.json بنجاح!`);
+      console.log(`📈 العدد النهائي: ${allMatches.length} مباراة`);
+
+      // طباعة إحصائيات الدوريات
+      const leagueStats = {};
+      allMatches.forEach((match) => {
+        const leagueName = match.league.en;
+        leagueStats[leagueName] = (leagueStats[leagueName] || 0) + 1;
+      });
+
+      console.log(`\n📊 توزيع المباريات حسب الدوري:`);
+      Object.entries(leagueStats).forEach(([league, count]) => {
+        console.log(`   • ${league}: ${count} مباراة`);
+      });
+    } catch (writeError) {
+      console.error("❌ خطأ في كتابة الملف الشامل:", writeError.message);
+    }
   } catch (err) {
-    console.error("⚠️ خطأ في fetchUpcomingMatches:", err.message || err);
+    console.error("⚠️ خطأ عام في fetchUpcomingMatches:", err.message || err);
   }
 }
 
-fetchUpcomingMatches();
+// تشغيل الدالة مع معالجة الأخطاء العامة
+fetchUpcomingMatches().catch((err) => {
+  console.error("💥 خطأ غير متوقع:", err);
+});
 
 module.exports = fetchUpcomingMatches;
