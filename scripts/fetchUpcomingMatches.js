@@ -33,8 +33,9 @@ async function fetchLeagueMatches(id, league, filename) {
 
   let allEvents = [];
   const urls = [
-    `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${id}`, // القادمة
-    `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=${id}`, // السابقة
+    `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${id}`,
+    `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=${id}`,
+    `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${id}&s=2024-2025`,
   ];
 
   console.log(`🔄 بدء جلب بيانات ${league.en}...`);
